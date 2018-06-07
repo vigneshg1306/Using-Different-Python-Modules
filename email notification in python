@@ -1,0 +1,55 @@
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+import ConfigParser
+from subprocess import check_output
+import ast
+
+config = ConfigParser.ConfigParser()
+config.readfp(open(r'send_email.config'))
+from_mail = config.get('sender', 'from_mail')
+mail_passwd = config.get('sender', 'mail_passwd')
+to_mail_list = ast.literal_eval(config.get('sender', 'to_mail_list'))
+sub = config.get('sender', 'sub')
+body_msg = config.get('sender', 'body_msg')
+
+class SendEmail:
+	def __init__(self):
+		pass
+		
+	def exe_cmd(self):
+		with open('dir.txt','w') as f:
+			a=check_output("dir",shell=True)
+			print(a)
+			print(type(a))
+			f.write(str(a))
+		
+	def send_mail(self,from_mail,mail_passwd,to_mail_list,sub,body_msg,filename):
+		for to_mail in to_mail_list:
+			msg = MIMEMultipart()
+			msg['From'] = from_mail
+			msg['To'] = to_mail
+			msg['Subject'] = sub
+			msg.attach(MIMEText(body_msg,'plain'))
+			attachment  =open(filename,'rb')
+			part = MIMEBase('application','octet-stream')
+			part.set_payload((attachment).read())
+			encoders.encode_base64(part)
+			part.add_header('Content-Disposition',"attachment; filename= "+filename)
+			msg.attach(part)
+			text = msg.as_string()
+			server = smtplib.SMTP('smtp.gmail.com',587)
+			server.starttls()
+			server.login(from_mail,mail_passwd)
+			server.sendmail(from_mail,to_mail,text)
+			print("Mail sent Successfully to ",to_mail)
+			server.quit()
+		
+
+		
+
+s1 = SendEmail()
+s1.exe_cmd()
+s1.send_mail(from_mail,mail_passwd,to_mail_list,sub,body_msg,filename='dir.txt')	
